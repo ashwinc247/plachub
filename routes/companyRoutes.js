@@ -1,0 +1,18 @@
+const express = require('express');
+const router = express.Router();
+const {
+    getCompanies,
+    getCompany,
+    createCompany,
+    updateCompany,
+    deleteCompany,
+} = require('../controllers/companyController');
+const { protect, authorize } = require('../middleware/authMiddleware');
+
+router.get('/', protect, getCompanies);
+router.get('/:id', protect, getCompany);
+router.post('/', protect, authorize('admin'), createCompany);
+router.put('/:id', protect, authorize('admin'), updateCompany);
+router.delete('/:id', protect, authorize('admin'), deleteCompany);
+
+module.exports = router;
