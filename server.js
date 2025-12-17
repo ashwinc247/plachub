@@ -22,6 +22,7 @@ app.use('/api/students', require('./routes/studentRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes')); // AI Chatbot Route
 
 app.get('/', (req, res) => {
     res.send('API is running...');

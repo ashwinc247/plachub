@@ -21,6 +21,9 @@ const registerUser = async (req, res) => {
         return res.status(400).json({ message: 'Please add all required fields' });
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     let Model;
     if (role === 'student') Model = Student;
     else if (role === 'faculty') Model = Faculty;
@@ -28,7 +31,7 @@ const registerUser = async (req, res) => {
     else return res.status(400).json({ message: 'Invalid role' });
 
     // Check if user exists
-    const userExists = await Model.findOne({ email });
+    const userExists = await Model.findOne({ email: normalizedEmail });
 
     if (userExists) {
         return res.status(400).json({ message: 'User already exists' });
@@ -41,7 +44,7 @@ const registerUser = async (req, res) => {
     // Create user
     const user = await Model.create({
         name,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         ...otherData // Spread other specific fields like department, etc.
     });
@@ -69,14 +72,38 @@ const loginUser = async (req, res) => {
         return res.status(400).json({ message: 'Role is required for login' });
     }
 
+    // Normalize email
+    const normalizedEmail = email ? email.toLowerCase().trim() : '';
+
     let Model;
     if (role === 'student') Model = Student;
     else if (role === 'faculty') Model = Faculty;
     else if (role === 'admin') Model = Admin;
     else return res.status(400).json({ message: 'Invalid role' });
 
-    const user = await Model.findOne({ email });
+    // Check if user exists
+    const user = await Model.findOne({ email: normalizedEmail });
 
+    if (user) {
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (isMatch) {
+            res.json({
+                _id: user.id,
+                name: user.name,
+                email: user.email,
+                role: role,
+                avatar: user.avatar,
+                verified: user.verified, // Include verification status
+                token: generateToken(user.id, role),
+            });
+            return;
+        }
+    }
+
+    // Fallthrough or if user not found
+    res.status(400).json({ message: 'Invalid credentials' });
+    /*
     if (user && (await bcrypt.compare(password, user.password))) {
         res.json({
             _id: user.id,
@@ -90,6 +117,7 @@ const loginUser = async (req, res) => {
     } else {
         res.status(400).json({ message: 'Invalid credentials' });
     }
+    */
 };
 
 // @desc    Get user data
